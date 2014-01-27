@@ -14,4 +14,4 @@ authors_string = ', '.join(authors)
 emails = ['rubycoder@gmail.com']
 license = 'MIT'
 copyright = '2014 ' + authors_string
-url = 'http://example.com/'
+url = 'https://github.com/javouhey/airquality'

@@ -2,8 +2,8 @@
  air quality
 =========================
 
-.. image:: https://travis-ci.org/javouhey/chinaairquality.png
-   :target: https://travis-ci.org/javouhey/chinaairquality
+.. image:: https://travis-ci.org/javouhey/airquality.png
+   :target: https://travis-ci.org/javouhey/airquality
 
 This project scraps live pollution readings for cities and stores them in mongodb.
 
