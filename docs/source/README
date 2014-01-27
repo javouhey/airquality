@@ -1,0 +1,5 @@
+Run `sphinx-apidoc -o . ../../airquality' in this directory.
+
+This will generate `modules.rst' and `airquality.rst'.
+
+Then include `modules.rst' in your `index.rst' file.
