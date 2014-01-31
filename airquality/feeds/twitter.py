@@ -78,8 +78,8 @@ class TwitterParser(ReadingParser):
         )
         keydata = {u'pollutant': pollutant, u'missing': False}
         keydata.update(
-            {u'index': {u'unit': u'AQI', u'value': int(segments[3])},
-             u'concentration': {u'value': float(segments[2])},
+            {u'index': tuple([int(segments[3]), c.V_AQI]),
+             u'concentration': float(segments[2]),
              u'display': {
                  u'en': segments[4],
                  u'fr': u''
@@ -97,8 +97,8 @@ class TwitterParser(ReadingParser):
             {c.K_HOURFR: datetime.strptime(segments[0], self.date_fmt)})
         keydata = {u'pollutant': segments[1], u'missing': False}
         keydata.update(
-            {u'index': {u'unit': u'AQI', u'value': int(segments[3])},
-             u'concentration': {u'value': float(segments[2])},
+            {u'index': tuple([int(segments[3]), c.V_AQI]),
+             u'concentration': float(segments[2]),
              u'display': {
                  u'en': segments[4],
                  u'fr': u''
@@ -124,8 +124,8 @@ class TwitterParser(ReadingParser):
              },
              u'data': {
                u'pollutant': u'PM2.5',
-               u'concentration': {},
-               u'index': {},
+               u'concentration': float('-0.1'),
+               u'index': tuple(),
                u'missing': True,
                u'display': {
                  u'en': u'No Data',
@@ -145,9 +145,10 @@ class TwitterParser(ReadingParser):
         keytype.update(
             {c.K_HOURFR: datetime.strptime(segments[0], self.date_fmt)}
         )
-        keydata = {u'pollutant': segments[1], u'concentration': {}}
+        keydata = {u'pollutant': segments[1],
+                   u'concentration': c.V_BOGUS_CONCENTRATION}
         keydata.update(
-            {u'index': {},
+            {u'index': tuple(),
              u'missing': True,
              u'display': {
                  u'en': segments[2],
