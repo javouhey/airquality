@@ -30,6 +30,8 @@ class TestTwitterParser(object):
         assert result[c.K_DATA][u'pollutant'] == expects['pol']
         assert result[c.K_DATA][u'display'][u'en'] == expects['en']
         assert result[c.K_DATA][u'missing']
+        assert result[c.K_DATA][u'concentration'] == c.V_BOGUS_CONCENTRATION
+        assert result[c.K_DATA][u'index'] == tuple()
 
     def test_parsing_good_nodata(self, nodata, twitter):
         """See module conftest"""
@@ -48,9 +50,9 @@ class TestTwitterParser(object):
         assert result[c.K_TYPE][c.K_HOURTO] == expects[c.K_HOURTO]
         assert result[c.K_TYPE][c.K_NATURE] == expects['nat']
         assert result[c.K_DATA][u'pollutant'] == expects['pol']
-        assert result[c.K_DATA][u'concentration']['value'] == \
+        assert result[c.K_DATA][u'concentration'] == \
             expects['concentration']
-        assert result[c.K_DATA][u'index']['value'] == \
+        assert result[c.K_DATA][u'index'][0] == \
             expects['aqi']
         assert result[c.K_DATA][u'display'][u'en'] == expects['en']
         assert not result[c.K_DATA][u'missing']
@@ -69,9 +71,9 @@ class TestTwitterParser(object):
         assert result[c.K_TYPE][c.K_HOURFR] == expects[c.K_HOURFR]
         assert result[c.K_TYPE][c.K_NATURE] == expects['nat']
         assert result[c.K_DATA][u'pollutant'] == expects['pol']
-        assert result[c.K_DATA][u'concentration']['value'] == \
+        assert result[c.K_DATA][u'concentration'] == \
             expects['concentration']
-        assert result[c.K_DATA][u'index']['value'] == \
+        assert result[c.K_DATA][u'index'][0] == \
             expects['aqi']
         assert result[c.K_DATA][u'display'][u'en'] == expects['en']
         assert not result[c.K_DATA][u'missing']
