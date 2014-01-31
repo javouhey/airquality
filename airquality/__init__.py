@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Stores readings in mongodb"""
 
 from airquality import metadata

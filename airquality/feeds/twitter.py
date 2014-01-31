@@ -1,21 +1,25 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from . import ReadingParser
-import re
+from . import consts as c
 from datetime import datetime
 from copy import deepcopy
+import re
 
 
 class TwitterParser(ReadingParser):
 
-    SEMICOLON = u';'
     date_fmt = u'%m-%d-%Y %H:%M'
 
     regex_nodata = re.compile(r"^no data$", re.IGNORECASE)
+    regex_24h = re.compile(r"^(?P<pollutant>.*?)\s*24hr\s*avg$", re.IGNORECASE)
     regex_dtfrom = re.compile(r"^(?P<from>\d{2}-\d{2}-\d{4} \d{2}:\d{2})$")
-    regex_dtfromto = re.compile(r"""
-    ^(?P<from>\d{2}-\d{2}-\d{4} \d{2}:\d{2})  # starting datetime
-    \s* to \s*                                # lose the 'to' & whitespaces
-    ^(?P<to>\d{2}-\d{2}-\d{4} \d{2}:\d{2})$   # end datetime
-    """, re.VERBOSE)
+    regex_dtfromto2 = re.compile(r"""^(?P<from>\d{2}-\d{2}-\d{4} \d{2}:\d{2})
+                                     \s*to\s*
+                                     (?P<to>\d{2}-\d{2}-\d{4} \d{2}:\d{2})$""",
+                                 re.X)
+    e = r"\s*to\s*(?P<to>\d{2}-\d{2}-\d{4} \d{2}:\d{2})$"
+    regex_dtfromto = re.compile(r"^(?P<from>\d{2}-\d{2}-\d{4} \d{2}:\d{2})"+e)
 
     def parse(self, raw, **kwargs):
         """Parse a tweet's content.
@@ -28,22 +32,25 @@ class TwitterParser(ReadingParser):
         if raw is None:
             raise TypeError
         if type(raw) != unicode:
-            raise ValueError('raw must be in unicode')
+            raise ValueError(c.M_UNICODE)
 
         segments = raw.strip() \
-                      .split(TwitterParser.SEMICOLON)
+                      .split(c.SEMICOLON)
         segments = [s.strip() for s in segments if s]
-
+#        import pytest
+#        pytest.set_trace()
         retval = {}
-        processors = [self._parse_nodata]
+        processors = [self._parse_nodata,
+                      self._parse_24havg, self._parse_onehour]
         for processor in processors:
+            # TODO: catch ValueError and log it
             ok, adict = processor(segments)
-            print adict
             if ok:
                 self._attach(retval, adict, [u'type', u'data'])
+                break
 
         if not retval:
-            raise ValueError('unrecognized')
+            raise ValueError(u'unrecognized')
 
         return retval
 
@@ -52,8 +59,55 @@ class TwitterParser(ReadingParser):
             if key in adict:
                 retval[key] = deepcopy(adict[key])
 
+    def _parse_24havg(self, segments, timezone=None):
+        if len(segments) != 5 \
+           or self.regex_24h.match(segments[1]) is None \
+           or self.regex_dtfromto.match(segments[0]) is None:
+            return (False, {})
+
+        r = self.regex_dtfromto.search(segments[0])
+        dfrom, dto = r.groups()
+
+        r = self.regex_24h.match(segments[1])
+        pollutant = r.groups()[0]
+
+        keytype = {c.K_NATURE: c.V_24HAVG}
+        keytype.update(
+            {c.K_HOURFR: datetime.strptime(dfrom, self.date_fmt),
+             c.K_HOURTO: datetime.strptime(dto, self.date_fmt)}
+        )
+        keydata = {u'pollutant': pollutant, u'missing': False}
+        keydata.update(
+            {u'index': {u'unit': u'AQI', u'value': int(segments[3])},
+             u'concentration': {u'value': float(segments[2])},
+             u'display': {
+                 u'en': segments[4],
+                 u'fr': u''
+             }}
+        )
+        return (True, {c.K_TYPE: keytype, c.K_DATA: keydata})
+
+    def _parse_onehour(self, segments, timezone=None):
+        if len(segments) != 5 \
+           or self.regex_dtfrom.match(segments[0]) is None:
+            return (False, {})
+
+        keytype = {c.K_NATURE: c.V_HOURLY, c.K_HOURTO: None}
+        keytype.update(
+            {c.K_HOURFR: datetime.strptime(segments[0], self.date_fmt)})
+        keydata = {u'pollutant': segments[1], u'missing': False}
+        keydata.update(
+            {u'index': {u'unit': u'AQI', u'value': int(segments[3])},
+             u'concentration': {u'value': float(segments[2])},
+             u'display': {
+                 u'en': segments[4],
+                 u'fr': u''
+             }}
+        )
+        return (True, {c.K_TYPE: keytype, c.K_DATA: keydata})
+
     def _parse_nodata(self, segments, timezone=None):
-        """Expects len(segments) is 3 and item 2 is 'No Data'
+        """Expects len(segments) to be 3 and item 2 is 'No Data'
 
         :param segments: the bits that make up the content
         :type segments: `list`
@@ -70,8 +124,9 @@ class TwitterParser(ReadingParser):
              },
              u'data': {
                u'pollutant': u'PM2.5',
-               u'concentration': {}
-               u'index': {}
+               u'concentration': {},
+               u'index': {},
+               u'missing': True,
                u'display': {
                  u'en': u'No Data',
                  u'fr': u'Pas de donn\u00E9es'
@@ -86,17 +141,18 @@ class TwitterParser(ReadingParser):
            or self.regex_dtfrom.match(segments[0]) is None:
             return (False, {})
 
-        keytype = {u'nature': u'hourly', u'hour_to': None}
+        keytype = {c.K_NATURE: c.V_HOURLY, c.K_HOURTO: None}
         keytype.update(
-            {u'hour_from': datetime.strptime(segments[0], self.date_fmt)}
+            {c.K_HOURFR: datetime.strptime(segments[0], self.date_fmt)}
         )
         keydata = {u'pollutant': segments[1], u'concentration': {}}
         keydata.update(
             {u'index': {},
+             u'missing': True,
              u'display': {
                  u'en': segments[2],
                  u'fr': u'Pas de donn\u00E9es'
              }}
         )
 
-        return (True, {u'type': keytype, u'data': keydata})
+        return (True, {c.K_TYPE: keytype, c.K_DATA: keydata})
