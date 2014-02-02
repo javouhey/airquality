@@ -8,6 +8,7 @@ SEMICOLON = u';'
 K_NATURE = u'nature'
 K_HOURFR = u'hour_from'
 K_HOURTO = u'hour_to'
+K_TZ = u'timezone'
 
 K_DATA = u'data'
 K_TYPE = u'type'

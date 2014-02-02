@@ -40,8 +40,8 @@ class TwitterParser(ReadingParser):
 #        import pytest
 #        pytest.set_trace()
         retval = {}
-        processors = [self._parse_nodata,
-                      self._parse_24havg, self._parse_onehour]
+        processors = [self._parse_nodata, self._parse_24havg,
+                      self._parse_onehour]
         for processor in processors:
             # TODO: catch ValueError and log it
             ok, adict = processor(segments)
@@ -76,6 +76,8 @@ class TwitterParser(ReadingParser):
             {c.K_HOURFR: datetime.strptime(dfrom, self.date_fmt),
              c.K_HOURTO: datetime.strptime(dto, self.date_fmt)}
         )
+        if timezone:
+            keytype.update({c.K_TZ: timezone})
         keydata = {u'pollutant': pollutant, u'missing': False}
         keydata.update(
             {u'index': tuple([int(segments[3]), c.V_AQI]),
@@ -85,7 +87,7 @@ class TwitterParser(ReadingParser):
                  u'fr': u''
              }}
         )
-        return (True, {c.K_TYPE: keytype, c.K_DATA: keydata})
+        return True, {c.K_TYPE: keytype, c.K_DATA: keydata}
 
     def _parse_onehour(self, segments, timezone=None):
         if len(segments) != 5 \
@@ -95,6 +97,8 @@ class TwitterParser(ReadingParser):
         keytype = {c.K_NATURE: c.V_HOURLY, c.K_HOURTO: None}
         keytype.update(
             {c.K_HOURFR: datetime.strptime(segments[0], self.date_fmt)})
+        if timezone:
+            keytype.update({c.K_TZ: timezone})
         keydata = {u'pollutant': segments[1], u'missing': False}
         keydata.update(
             {u'index': tuple([int(segments[3]), c.V_AQI]),
@@ -104,7 +108,7 @@ class TwitterParser(ReadingParser):
                  u'fr': u''
              }}
         )
-        return (True, {c.K_TYPE: keytype, c.K_DATA: keydata})
+        return True, {c.K_TYPE: keytype, c.K_DATA: keydata}
 
     def _parse_nodata(self, segments, timezone=None):
         """Expects len(segments) to be 3 and item 2 is 'No Data'
@@ -145,6 +149,8 @@ class TwitterParser(ReadingParser):
         keytype.update(
             {c.K_HOURFR: datetime.strptime(segments[0], self.date_fmt)}
         )
+        if timezone:
+            keytype.update({c.K_TZ: timezone})
         keydata = {u'pollutant': segments[1],
                    u'concentration': c.V_BOGUS_CONCENTRATION}
         keydata.update(
@@ -156,4 +162,4 @@ class TwitterParser(ReadingParser):
              }}
         )
 
-        return (True, {c.K_TYPE: keytype, c.K_DATA: keydata})
+        return True, {c.K_TYPE: keytype, c.K_DATA: keydata}
