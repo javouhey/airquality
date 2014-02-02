@@ -1,8 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-Persistence mechanisms
+Persistence mechanisms.
+
+.. To interact with the repository::
+
+    from airquality import backends, settings
+    from contextlib import closing
+
+    with closing(backends.Repository(settings)) as repo:
+        repo.save( [{'tweet_id': 12532657652, 'text': 'Hello World'}] )
 """
 import traceback
+import logging
 from types import ListType
 from functools import wraps
 
@@ -11,14 +20,27 @@ __author__ = 'Gavin Bong'
 
 class MongoProxy(object):
     """Proxy to MongoRepository"""
-    def __init__(self, **kwargs):
-        pass
+    def __init__(self, repo_class, settings):
+        logging.info(repo_class)
+        self.collection_name = getattr(settings, 'MONGO_COLLECTION')
+        self.persister = repo_class()  # TODO configure with MONGO_URL etc..
 
     def is_alive(self):
-        return False
+        return self.persister is not None
 
     def kill(self):
-        pass
+        self.persister.close()
+        self.persister = None
+
+    def save(self, tweets):
+        collection = self.persister.get_collection(self.collection_name)
+        for tweet in tweets:
+            self.persister.save(collection, tweet)
+
+    def burp(self):
+        collection = self.persister.get_collection(self.collection_name)
+        for j in self.persister.find_one(collection):
+            print j
 
 
 class Repository(object):
@@ -30,14 +52,15 @@ class Repository(object):
         MONGO: MongoProxy
     }
 
-    def __init__(self, engine_tuple, **kwargs):
+    def __init__(self, settings, **kwargs):
         self.a = 1
-        self.engine_meta = {}  # put backend specific configs here
         try:
-            # TODO pull collection name from kwargs
+            engine_tuple = getattr(settings, 'STORAGE_ENGINE')
             self.engine = engine_tuple[0]
             self.storage_klasses = self._get_klazz(engine_tuple)
-            self.persister = self.storage_klasses[self.engine]()
+            proxy_class = self.proxies.get(self.engine)
+            self.proxy = proxy_class(self.storage_klasses[self.engine],
+                                     settings)
         except:
             traceback.print_exc()
             raise ValueError('construction failed')
@@ -60,30 +83,20 @@ class Repository(object):
             raise ValueError('tweets must be a list')
 
         print 'saving tweets'
-        if self.engine == self.MONGO:
-            c = self.persister.get_collection('gavin')
-            for tweet in tweets:
-                self.persister.save(c, tweet)
+        self.proxy.save(tweets)
         return 0
 
     @_checker
     def burp(self):
         print 'burping', self.a
-        c = self.persister.get_collection('gavin')
-        for j in self.persister.find_one(c):
-            print j
+        self.proxy.burp()
 
     def close(self):
-        self.persister.close()
-        self._cleanup()
+        self.proxy.kill()
         print 'closing ', self.a
 
-    def _cleanup(self):
-        """Prevent it being re-awaken"""
-        self.persister = None
-
     def _check_alive(self):
-        if not self.persister:
+        if not self.proxy.is_alive():
             raise RuntimeError('disconnected')
 
     @classmethod
