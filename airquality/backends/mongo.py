@@ -19,13 +19,16 @@ class MongoQueryMixin(object):
 
 
 class MongoRepository(MongoQueryMixin):
+    kwargs = {'fsync': True}
 
     def __init__(self, url='mongodb://localhost:27017/', database='test'):
-        self.client = MongoClient(url)
+        self.client = MongoClient(host=url, max_pool_size=12, **self.kwargs)
         self.db = getattr(self.client, database)
+        #print self.client.max_pool_size, self.client.write_concern
 
     def close(self):
         self.client.close()
+        self.db = None
 
     def get_collection(self, collection_name):
         if collection_name:

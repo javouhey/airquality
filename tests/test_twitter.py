@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
+import os
+from airquality.feeds.twitter import TwitterService
 from airquality.feeds import consts as c
 from pytest import raises
 parametrize = pytest.mark.parametrize
@@ -93,3 +95,15 @@ class TestTwitterParser(object):
     def test_eval(self, input, expected):
         """copied from pytest samples"""
         assert eval(input) == expected
+
+
+class TestTwitterService(object):
+
+    def test_environment_vars(self, apikeys, monkeypatch):
+        for k, v in apikeys.items():
+            monkeypatch.setitem(os.environ, k, v)
+
+        service = TwitterService()
+        for k in apikeys.keys():
+            lower_k = k.lower()
+            assert apikeys[k] == getattr(service, lower_k)

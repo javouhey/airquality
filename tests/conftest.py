@@ -67,6 +67,9 @@ def twitter(request):
 
 
 @pytest.fixture(scope="module")
-def hourly_shanghai(request):
-    """a"""
-    return None
+def apikeys(request):
+    adict = {'CONSUMER_KEY': 'consumerkey',
+             'CONSUMER_SECRET': 'consumersecret',
+             'OAUTH_TOKEN': '12345token',
+             'OAUTH_TOKEN_SECRET': '8798797secret'}
+    return adict

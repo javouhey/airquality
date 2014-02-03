@@ -23,7 +23,9 @@ class MongoProxy(object):
     def __init__(self, repo_class, settings):
         logging.info(repo_class)
         self.collection_name = getattr(settings, 'MONGO_COLLECTION')
-        self.persister = repo_class()  # TODO configure with MONGO_URL etc..
+        self.persister = repo_class(
+            getattr(settings, 'MONGO_URL'),
+            getattr(settings, 'MONGO_DATABASE'))
 
     def is_alive(self):
         return self.persister is not None

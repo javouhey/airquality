@@ -4,10 +4,17 @@ from . import ReadingParser
 from . import consts as c
 from datetime import datetime
 from copy import deepcopy
+
+import twitter
 import re
+import os
+
+"""Functionality to parse feeds from Twitter"""
 
 
 class TwitterParser(ReadingParser):
+    """Parses the tweet's `text` field.
+    """
 
     date_fmt = u'%m-%d-%Y %H:%M'
 
@@ -163,3 +170,30 @@ class TwitterParser(ReadingParser):
         )
 
         return True, {c.K_TYPE: keytype, c.K_DATA: keydata}
+
+
+class TwitterService(object):
+    """Connects to twitter and pull down pollution tweets.
+
+    .. Collaborators:
+       * `TwitterParser
+       * environment variables
+    """
+    def __init__(self, twitter_list='pollution', twitter_user='javouhey'):
+        self.consumer_key = os.environ['CONSUMER_KEY']
+        self.consumer_secret = os.environ['CONSUMER_SECRET']
+        self.oauth_token = os.environ['OAUTH_TOKEN']
+        self.oauth_token_secret = os.environ['OAUTH_TOKEN_SECRET']
+        self.slug = twitter_list
+        self.screenname = twitter_user
+
+    def get_latest_tweets(self, limit=5):
+        credential = twitter.oauth.OAuth(self.oauth_token,
+                                         self.oauth_token_secret,
+                                         self.consumer_key,
+                                         self.consumer_secret)
+        api = twitter.Twitter(auth=credential)
+        tweets = api.lists.statuses(slug=self.slug,
+                                    owner_screen_name=self.screenname,
+                                    count=limit)
+        return tweets
