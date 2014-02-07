@@ -179,15 +179,29 @@ class TwitterService(object):
        * `TwitterParser
        * environment variables
     """
-    def __init__(self, twitter_list='pollution', twitter_user='javouhey'):
+    def __init__(self, twitter_list='pollution', twitter_user='GavinAtTiger'):
+        """
+        :raises: `ValueError` if these enviroment variables are not set
+            * `CONSUMER_KEY`
+            * `CONSUMER_SECRET`
+            * `OAUTH_TOKEN`
+            * `OAUTH_TOKEN_SECRET`
+        """
         self.consumer_key = os.environ['CONSUMER_KEY']
         self.consumer_secret = os.environ['CONSUMER_SECRET']
         self.oauth_token = os.environ['OAUTH_TOKEN']
         self.oauth_token_secret = os.environ['OAUTH_TOKEN_SECRET']
         self.slug = twitter_list
         self.screenname = twitter_user
+        self.pollution_parser = TwitterParser()
 
-    def get_latest_tweets(self, limit=5):
+    def get_latest_tweets(self, raw=False, limit=5):
+        """Returns an array of tweets.
+
+        :param raw: if `True` it returns the whole enchilada.
+        :type raw: `bool`
+        :returns: an array of dicts
+        """
         credential = twitter.oauth.OAuth(self.oauth_token,
                                          self.oauth_token_secret,
                                          self.consumer_key,
@@ -196,4 +210,15 @@ class TwitterService(object):
         tweets = api.lists.statuses(slug=self.slug,
                                     owner_screen_name=self.screenname,
                                     count=limit)
+        if raw:
+            return tweets
+        else:
+            retval = []
+            for tweet in tweets:
+                if tweet.get('text'):
+                    new_tweet = self.pollution_parser.parse(tweet.get('text'))
+                    retval.append(new_tweet)
+                    # TODO attach the tweet ids & location etc...
+            tweets = retval
+
         return tweets
