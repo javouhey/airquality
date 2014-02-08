@@ -200,7 +200,7 @@ class TwitterService(object):
 
         :param raw: if `True` it returns the whole enchilada.
         :type raw: `bool`
-        :returns: an array of dicts
+        :returns: an array of dicts or a `TwitterResponse` if raw
         """
         credential = twitter.oauth.OAuth(self.oauth_token,
                                          self.oauth_token_secret,

@@ -73,3 +73,39 @@ def apikeys(request):
              'OAUTH_TOKEN': '12345token',
              'OAUTH_TOKEN_SECRET': '8798797secret'}
     return adict
+
+
+@pytest.fixture(autouse=True)
+def no_requests(monkeypatch):
+    """
+    The following doesn't work because it uses __call__ internally
+      monkeypatch.delattr("twitter.Twitter.lists")
+    """
+    #monkeypatch.delattr('urllib2.urlopen')
+    pass
+
+
+class MockResponse(object):
+    def __init__(self, o):
+        self.result = o
+        self.headers = {'Content-Type': 'application/json',
+                        'Content-Encoding': '',
+                        'X-Rate-Limit-Limit': "20",
+                        'X-Rate-Limit-Reset': "4"}
+
+    def read(self):
+        import json
+        return json.dumps(self.result)
+
+    def info(self):
+        return self.headers
+
+
+def urlopen(req, **kwargs):
+    import raw_twitter
+    return MockResponse([raw_twitter.f])
+
+
+@pytest.fixture(scope="module")
+def mockurlresponse(request):
+    return urlopen

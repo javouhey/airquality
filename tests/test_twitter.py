@@ -99,11 +99,61 @@ class TestTwitterParser(object):
 
 class TestTwitterService(object):
 
-    def test_environment_vars(self, apikeys, monkeypatch):
+    def _set_environ(self, apikeys, monkeypatch):
         for k, v in apikeys.items():
             monkeypatch.setitem(os.environ, k, v)
+
+    def test_environment_vars(self, apikeys, monkeypatch):
+        self._set_environ(apikeys, monkeypatch)
 
         service = TwitterService()
         for k in apikeys.keys():
             lower_k = k.lower()
             assert apikeys[k] == getattr(service, lower_k)
+
+    def test_defaultprops(self, apikeys, monkeypatch):
+        for k, v in apikeys.items():
+            monkeypatch.setitem(os.environ, k, v)
+
+        service1 = TwitterService()
+        assert service1.slug == 'pollution'
+        assert service1.screenname == 'GavinAtTiger'
+
+        service2 = TwitterService(twitter_user='saucony', twitter_list='alist')
+        assert service2.slug == 'alist'
+        assert service2.screenname == 'saucony'
+
+    def test_gettweets(self, apikeys, monkeypatch, mockurlresponse):
+        self._set_environ(apikeys, monkeypatch)
+
+        import urllib2
+        monkeypatch.setattr(urllib2, 'urlopen', mockurlresponse)
+
+        number_of_tweets = 1
+        service = TwitterService()
+
+        # parsed tweets
+        result = service.get_latest_tweets(limit=number_of_tweets)
+        assert type(result) == list
+        assert len(result) == number_of_tweets
+        assert type(result[0]) == dict
+        assert result[0]['data']['index'] == (169, 'AQI')
+        assert result[0]['data']['concentration'] == 90.0
+
+        import datetime
+        expected = datetime.datetime(2014, 2, 8, 7, 0)
+        assert result[0]['type']['hour_from'] == expected
+
+        # raw tweets
+        result = service.get_latest_tweets(limit=number_of_tweets, raw=True)
+        from twitter import TwitterResponse
+        assert isinstance(result, TwitterResponse)
+        assert isinstance(result, list)
+        assert len(result) == number_of_tweets
+        assert result.rate_limit_limit == 20
+        assert result.rate_limit_reset == 4
+
+        assert type(result[0]) == dict
+        assert 'data' not in result[0]
+        assert 'created_at' in result[0]
+        assert result[0]['id'] == 431929188598042624L
