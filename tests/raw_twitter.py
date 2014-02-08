@@ -1,4 +1,5 @@
-﻿f = {u'contributors': None,
+﻿# -*- coding: utf-8 -*-
+f = {u'contributors': None,
      u'coordinates': None,
      u'created_at': u'Fri Feb 07 23:15:18 +0000 2014',
      u'entities': {u'hashtags': [],

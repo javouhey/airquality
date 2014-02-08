@@ -112,8 +112,7 @@ class TestTwitterService(object):
             assert apikeys[k] == getattr(service, lower_k)
 
     def test_defaultprops(self, apikeys, monkeypatch):
-        for k, v in apikeys.items():
-            monkeypatch.setitem(os.environ, k, v)
+        self._set_environ(apikeys, monkeypatch)
 
         service1 = TwitterService()
         assert service1.slug == 'pollution'
@@ -139,6 +138,7 @@ class TestTwitterService(object):
         assert type(result[0]) == dict
         assert result[0]['data']['index'] == (169, 'AQI')
         assert result[0]['data']['concentration'] == 90.0
+        assert result[0]['reading_id'] == 431929188598042624L
 
         import datetime
         expected = datetime.datetime(2014, 2, 8, 7, 0)

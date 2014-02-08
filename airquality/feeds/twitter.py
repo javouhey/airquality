@@ -217,8 +217,25 @@ class TwitterService(object):
             for tweet in tweets:
                 if tweet.get('text'):
                     new_tweet = self.pollution_parser.parse(tweet.get('text'))
+                    new_tweet.update({u'raw': tweet.get('text')})
+                    new_tweet.update({u'reading_id': tweet.get('id')})
+                    new_tweet.update({u'source': self._get_source(tweet)})
                     retval.append(new_tweet)
-                    # TODO attach the tweet ids & location etc...
+
             tweets = retval
 
         return tweets
+
+    def _get_source(self, tweet):
+        """Construct the identity of the feed responsible for this tweet
+
+        :returns: a dictionary that looks like this
+
+           {'type': 'twitter', 'screen_name' : 'shanghai',
+            'display_name': 'Shanghai guy', 'userid': 12617626715L}
+        """
+        retval = {u'type': u'twitter',
+                  u'user_id': tweet[u'user'][u'id'],
+                  u'display_name': tweet[u'user'][u'name'],
+                  u'screen_name': tweet[u'user'][u'screen_name']}
+        return retval
