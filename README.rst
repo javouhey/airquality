@@ -10,12 +10,19 @@ This project scraps live pollution readings for cities and stores them in mongod
 Data Model
 ==========
 
-blah blah
+TBD
 
 Project Setup
 =============
 
-TBD
+* During deployment, you need to set several environment variables:
+
+  * `CONSUMER_KEY`
+  * `CONSUMER_SECRET`
+  * `OAUTH_TOKEN`
+  * `OAUTH_TOKEN_SECRET`
+
+
 
 Project todos
 =============
