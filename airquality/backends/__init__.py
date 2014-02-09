@@ -12,7 +12,7 @@ Persistence mechanisms.
 """
 import traceback
 import logging
-from types import ListType
+from collections import Sequence
 from functools import wraps
 
 __author__ = 'Gavin Bong'
@@ -21,7 +21,7 @@ __author__ = 'Gavin Bong'
 class MongoProxy(object):
     """Proxy to MongoRepository"""
     def __init__(self, repo_class, settings):
-        logging.info(repo_class)
+        #logging.debug(repo_class)
         self.collection_name = getattr(settings, 'MONGO_COLLECTION')
         self.persister = repo_class(
             getattr(settings, 'MONGO_URL'),
@@ -34,15 +34,17 @@ class MongoProxy(object):
         self.persister.close()
         self.persister = None
 
-    def save(self, tweets):
+    def save(self, readings):
         collection = self.persister.get_collection(self.collection_name)
-        for tweet in tweets:
-            self.persister.save(collection, tweet)
+        result = []
+        for reading in readings:
+            result.append(self.persister.save(collection, reading))
+        return result
 
-    def burp(self):
+    def debug(self):
         collection = self.persister.get_collection(self.collection_name)
         for j in self.persister.find_one(collection):
-            print j
+            logging.debug(j)
 
 
 class Repository(object):
@@ -55,7 +57,6 @@ class Repository(object):
     }
 
     def __init__(self, settings, **kwargs):
-        self.a = 1
         try:
             engine_tuple = getattr(settings, 'STORAGE_ENGINE')
             self.engine = engine_tuple[0]
@@ -77,25 +78,21 @@ class Repository(object):
         return wrapper
 
     @_checker
-    def save(self, tweets):
-        if not tweets:
-            return 0
+    def save(self, readings):
+        if not readings:
+            return 0, None
 
-        if type(tweets) != ListType:
-            raise ValueError('tweets must be a list')
+        if not isinstance(readings, Sequence):
+            raise ValueError('readings must be a Sequence')
 
-        print 'saving tweets'
-        self.proxy.save(tweets)
-        return 0
+        return self.proxy.save(readings)
 
     @_checker
-    def burp(self):
-        print 'burping', self.a
-        self.proxy.burp()
+    def debug(self):
+        self.proxy.debug()
 
     def close(self):
         self.proxy.kill()
-        print 'closing ', self.a
 
     def _check_alive(self):
         if not self.proxy.is_alive():
@@ -109,3 +106,5 @@ class Repository(object):
         for segment in segments[1:]:
             m = getattr(m, segment)
         return {engine[0]: m}
+
+__all__ = ['Repository']

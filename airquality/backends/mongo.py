@@ -2,6 +2,7 @@
 from pymongo import (MongoClient, DESCENDING,)
 from collections import Mapping
 from enum import Enum
+import logging
 
 
 class Reading(Enum):
@@ -15,7 +16,6 @@ class MongoQueryMixin(object):
 
     @classmethod
     def find_one(cls, collection, limit=2, reading=Reading.hourly):
-        print reading
         return collection.find().sort('_id', DESCENDING).limit(limit)
 
     @classmethod
@@ -44,11 +44,13 @@ class MongoRepository(MongoQueryMixin):
     def __init__(self, url='mongodb://localhost:27017/', database='test'):
         self.client = MongoClient(host=url, max_pool_size=12, **self.kwargs)
         self.db = getattr(self.client, database)
+        logging.debug('open MongoRepository')
         #print self.client.max_pool_size, self.client.write_concern
 
     def close(self):
         self.client.close()
         self.db = None
+        logging.debug('closed MongoRepository')
 
     def get_collection(self, collection_name):
         if collection_name:
