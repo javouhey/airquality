@@ -7,6 +7,13 @@
 
 This project scraps live pollution readings for cities and stores them in mongodb.
 
+Data sources
+============
+
+Pollution readings are currently:
+
+* `@BeijingAir <https://twitter.com/beijingair/>`_
+
 Data Model
 ==========
 
