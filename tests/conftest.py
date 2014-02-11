@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 import pytest
+import mongomock
 from airquality.feeds.twitter import TwitterParser
 from airquality.feeds import consts as c
+from airquality.backends.mongo import MongoRepository
+from mock import Mock
 
 
 @pytest.fixture(scope="module")
@@ -109,3 +112,54 @@ def urlopen(req, **kwargs):
 @pytest.fixture(scope="module")
 def mockurlresponse(request):
     return urlopen
+
+
+class FakeModuleBad(object):
+    STORAGE_ENGINE = ('mong', 'airquality.backends.mongo.MongoRepository')
+
+
+@pytest.fixture(scope="module")
+def settings_bad_backend(request):
+    return FakeModuleBad()
+
+
+class FakeModuleOk(object):
+    STORAGE_ENGINE = ('mongo', 'airquality.backends.mongo.MongoRepository')
+    MONGO_COLLECTION = 'sochi'
+    MONGO_DATABASE = 'poutine'
+    MONGO_URL = 'foo_url'
+
+
+@pytest.fixture(scope="module")
+def settings_ok(request):
+    return FakeModuleOk()
+
+
+@pytest.fixture(scope="module")
+def mocked_mongo_tuple(request):
+    mock_mongo_repo = Mock(spec_set=MongoRepository)
+    mock_mongo_repo.close.return_value = None
+
+    mock_class = Mock()
+    mock_class.return_value = mock_mongo_repo
+    return mock_class, mock_mongo_repo
+
+
+@pytest.fixture(scope="module")
+def readings3(request):
+    """:returns: a mongodb collection containing pollution documents"""
+    collection = mongomock.Connection().db.collection
+    objects = [dict(votes=1, reading_id=999L), dict(votes=2, reading_id=888L)]
+    for obj in objects:
+        obj['_id'] = collection.insert(obj)
+    return collection, objects
+
+
+@pytest.fixture(scope="module")
+def readings(request):
+    """:returns: a mongodb collection containing pollution documents"""
+    import raw_mongo
+    collection = mongomock.Connection().db.collection
+    for obj in raw_mongo.m:
+        obj['_id'] = collection.insert(obj)
+    return collection, raw_mongo.m

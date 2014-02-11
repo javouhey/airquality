@@ -1,27 +1,30 @@
 # -*- coding: utf-8 -*-
 from pymongo import (MongoClient, DESCENDING,)
 from collections import Mapping
-from enum import Enum
+from . import Reading
 import logging
-
-
-class Reading(Enum):
-    hourly = u'hourly'
-    instant = u'instant'
-    avg24h = u'24havg'
-    avg12h = u'12havg'
 
 
 class MongoQueryMixin(object):
 
     @classmethod
-    def find_one(cls, collection, limit=2, reading=Reading.hourly):
-        return collection.find().sort('_id', DESCENDING).limit(limit)
+    def find(cls, collection, criteria={}, limit=2, reading=Reading.hourly,
+             sort_order=DESCENDING):
+        """
+        :param reading: default to hourly
+        :param sort_order: ordering by the default `ObjectId` in mongo.
+        """
+        if not isinstance(criteria, Mapping):
+            raise ValueError('expecting a dictionary')
+        result = collection.find(criteria)\
+                           .sort('_id', sort_order)\
+                           .limit(limit)
+        return result
 
     @classmethod
     def save(cls, collection, reading):
         """Inserts into mongo with pollution time-series data.
-           If documents with the tweet ids exist, then nothing is written.
+           If documents with reading_ids exist, then nothing is written.
 
         :param collection: The mongodb collection
         :param reading: must have a `reading_id` key
@@ -30,6 +33,8 @@ class MongoQueryMixin(object):
         """
         if not isinstance(reading, Mapping):
             raise ValueError('expecting a dictionary')
+        if 'reading_id' not in reading:
+            raise ValueError('expecting a key called reading_id')
 
         amatch = collection.find_one({'reading_id': reading['reading_id']})
         if amatch:

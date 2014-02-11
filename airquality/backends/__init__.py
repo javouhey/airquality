@@ -12,14 +12,31 @@ Persistence mechanisms.
 """
 import traceback
 import logging
+import sys
+from enum import Enum
 from collections import Sequence
 from functools import wraps
 
 __author__ = 'Gavin Bong'
 
 
+class Reading(Enum):
+    hourly = u'hourly'
+    instant = u'instant'
+    avg24h = u'24havg'
+    avg12h = u'12havg'
+    everything = u'everything'
+
+
+class Backend(Enum):
+    mongo = u'mongo'
+    postgres = 'postgresql'
+
+
 class MongoProxy(object):
-    """Proxy to MongoRepository"""
+    """Proxy to MongoRepository. Don't use!
+    Use `Repository` class instead.
+    """
     def __init__(self, repo_class, settings):
         #logging.debug(repo_class)
         self.collection_name = getattr(settings, 'MONGO_COLLECTION')
@@ -31,7 +48,8 @@ class MongoProxy(object):
         return self.persister is not None
 
     def kill(self):
-        self.persister.close()
+        if self.persister:
+            self.persister.close()
         self.persister = None
 
     def save(self, readings):
@@ -43,30 +61,33 @@ class MongoProxy(object):
 
     def debug(self):
         collection = self.persister.get_collection(self.collection_name)
-        for j in self.persister.find_one(collection):
-            logging.debug(j)
+        acursor = self.persister.find(collection,
+                                      {'type.nature': '24havg'}, limit=30)
+        result = [reading for reading in acursor]
+        return result
 
 
 class Repository(object):
-
-    MONGO = 'mongo'
-    POSTGRES = 'postgresql'
+    """Entrypoint to persists pollutants' readings."""
 
     proxies = {
-        MONGO: MongoProxy
+        Backend.mongo.value: MongoProxy
     }
 
     def __init__(self, settings, **kwargs):
         try:
             engine_tuple = getattr(settings, 'STORAGE_ENGINE')
             self.engine = engine_tuple[0]
+            Backend(self.engine)
             self.storage_klasses = self._get_klazz(engine_tuple)
             proxy_class = self.proxies.get(self.engine)
             self.proxy = proxy_class(self.storage_klasses[self.engine],
                                      settings)
         except:
+            exc_type, exc_value, exc_tb = sys.exc_info()
+            logging.exception(exc_tb)
             traceback.print_exc()
-            raise ValueError('construction failed')
+            raise RuntimeError('construction failed')
 
     def _checker(f):
         @wraps(f)
@@ -89,7 +110,8 @@ class Repository(object):
 
     @_checker
     def debug(self):
-        self.proxy.debug()
+        """TODO: redo"""
+        return self.proxy.debug()
 
     def close(self):
         self.proxy.kill()
@@ -107,4 +129,4 @@ class Repository(object):
             m = getattr(m, segment)
         return {engine[0]: m}
 
-__all__ = ['Repository']
+__all__ = ['Repository', 'Reading', 'Backend']
