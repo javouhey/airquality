@@ -13,6 +13,7 @@ Data sources
 Pollution readings are currently:
 
 * `@BeijingAir <https://twitter.com/beijingair/>`_
+* `British Columbia government air quality readings <http://www.bcairquality.ca/readings/>`_
 
 Data Model
 ==========
