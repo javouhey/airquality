@@ -12,7 +12,7 @@ Data Model
 
 * A reading scraped from Twitter is saved as follows (structure is not final):
 
-```JSON
+    ```Javascript
     {u'data': {u'concentration': 84.0,
      u'display': {u'en': u'Unhealthy (at 24-hour exposure at this level)', u'fr': u''},
      u'index': [166, u'AQI'],
@@ -27,7 +27,7 @@ Data Model
      u'type': {u'hour_from': datetime.datetime(2014, 2, 11, 8, 0),
                u'hour_to': None,
                u'nature': u'hourly'}}
-```
+    ```
 
 Project Setup
 =============
