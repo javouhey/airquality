@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from pymongo import (MongoClient, DESCENDING,)
+from pymongo.errors import DuplicateKeyError
 from collections import Mapping
 from . import Reading
 import logging
@@ -36,11 +37,16 @@ class MongoQueryMixin(object):
         if 'reading_id' not in reading:
             raise ValueError('expecting a key called reading_id')
 
-        amatch = collection.find_one({'reading_id': reading['reading_id']})
-        if amatch:
-            return 0, None
-        else:
+        try:
             return 1, collection.insert(reading)
+        except DuplicateKeyError:
+            logging.exception('WARNING: duplicate found during save')
+            m = collection.find_one({'reading_id': reading['reading_id'],
+                                     'source.type': reading['source']['type']})
+            if m is None:
+                raise RuntimeError('Was it deleted midway?')
+
+            return 0, m[u'_id']
 
 
 class MongoRepository(MongoQueryMixin):

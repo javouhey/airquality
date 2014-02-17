@@ -34,9 +34,12 @@ def test_save1(readings3):
 
     # good document
     RID = 1234567890L
-    new_document2 = dict(reading_id=RID, raw='PM2.5 90 AQI')
-    status, objid = repo.save(the_collection, new_document2)
-    assert status == 1
+    new_document2 = dict(reading_id=RID, raw='PM2.5 90 AQI',
+                         source=dict(type=u'twitter',
+                                     screen_name=u'Guangzhou_Air'))
+    status0, objid0 = repo.save(the_collection, new_document2)
+    assert status0 == 1
+    assert objid0 is not None
 
     zero = 0
 
@@ -52,6 +55,11 @@ def test_save1(readings3):
     o = [item for item in acursor]
     assert len(o) == 3
     assert o[zero]['reading_id'] == 999L
+
+    # unique keys test?
+    status, objid = repo.save(the_collection, new_document2)
+    assert status == 0
+    assert objid == objid0
 
 
 def test_query1(readings):

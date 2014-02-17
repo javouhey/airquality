@@ -149,7 +149,12 @@ def mocked_mongo_tuple(request):
 def readings3(request):
     """:returns: a mongodb collection containing pollution documents"""
     collection = mongomock.Connection().db.collection
-    objects = [dict(votes=1, reading_id=999L), dict(votes=2, reading_id=888L)]
+    one = dict(votes=1, reading_id=999L,
+               source=dict(type=u'twitter', screen_name=u'BeijingAir'))
+    two = dict(votes=2, reading_id=888L,
+               source=dict(type=u'twitter', screen_name=u'BeijingAir'))
+    objects = [one, two]
+
     for obj in objects:
         obj['_id'] = collection.insert(obj)
     return collection, objects
