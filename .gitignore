@@ -9,6 +9,7 @@
 
 # Python
 mylocal.py
+dvilla.py
 *.py[co]
 *.py.swp
 

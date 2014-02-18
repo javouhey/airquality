@@ -5,6 +5,7 @@ from . import consts as c
 from datetime import datetime
 from copy import deepcopy
 
+import logging
 import twitter
 import re
 import os
@@ -195,6 +196,15 @@ class TwitterService(object):
         self.screenname = twitter_user
         self.pollution_parser = TwitterParser()
 
+    def _log_ratelimit(self, reset=0, limit=0, remaining=0):
+        """Logs our counts for twitter API rate limit
+
+        .. See https://dev.twitter.com/docs/rate-limiting/1.1
+        """
+        format_string = 'Twitter rate limit: remaining={0}, ' + \
+                        'reset={1}, limit={2}'
+        logging.info(format_string.format(remaining, reset, limit))
+
     def get_latest_tweets(self, raw=False, limit=5):
         """Returns an array of tweets.
 
@@ -210,6 +220,10 @@ class TwitterService(object):
         tweets = api.lists.statuses(slug=self.slug,
                                     owner_screen_name=self.screenname,
                                     count=limit)
+        self._log_ratelimit(reset=tweets.rate_limit_reset,
+                            limit=tweets.rate_limit_limit,
+                            remaining=tweets.rate_limit_remaining)
+
         if raw:
             return tweets
         else:
