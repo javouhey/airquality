@@ -46,11 +46,11 @@ def poll():
     from contextlib import closing
 
     # --on K46
-    hardcoded = lambda: ('127.0.0.1:44444', '/tmp')
-    settings = get_settings(hardcoded, db='test')
+    #hardcoded = lambda: ('127.0.0.1:44444', '/tmp')
+    #settings = get_settings(hardcoded, db='test')
 
     # --production
-    # settings = get_settings(get_metadata)
+    settings = get_settings(get_metadata)
     print "\tPolling twitter .."
 
     service = TwitterService(twitter_user='dvillacouple')
