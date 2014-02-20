@@ -39,13 +39,13 @@ sched = Scheduler(daemon=False)
 sched.start()
 
 
-@sched.interval_schedule(seconds=15)
+@sched.interval_schedule(seconds=60)
 def poll():
     from airquality.feeds.twitter import TwitterService
     from airquality import backends
     from contextlib import closing
 
-    # --on K46
+    # --dev
     #hardcoded = lambda: ('127.0.0.1:44444', '/tmp')
     #settings = get_settings(hardcoded, db='test')
 
