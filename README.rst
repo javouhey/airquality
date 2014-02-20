@@ -46,11 +46,12 @@ Project Setup
   * `OAUTH_TOKEN`
   * `OAUTH_TOKEN_SECRET`
 
-* This project is deployed using docker. See project `airquality-docker <http://https://github.com/javouhey/airquality-docker/>`_ for detals.
+* This project is deployed using docker. See project `airquality-docker <https://github.com/javouhey/airquality-docker/>`_ for detals.
 
 Project todos
 =============
 
+* Add support for postgreSQL.
 * Change code in `setup.py` back to original checking for git projects.
 
 Authors
